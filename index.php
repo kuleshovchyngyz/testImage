@@ -16,7 +16,7 @@
 			return ( ( 'draggable' in div ) || ( 'ondragstart' in div && 'ondrop' in div ) ) && 'FormData' in window && 'FileReader' in window;
 		}();
 			
-		var minifyImg = function(dataUrl,newWidth,imageType="image/jpeg",resolve,imageArguments=1){
+		var minifyImg = function(dataUrl,newWidth,imageType="image/jpeg",resolve,imageArguments=0.7){
 			var image, oldWidth, oldHeight, newHeight, canvas, ctx, newDataUrl;
 			(new Promise(function(resolve){
 			  image = new Image(); image.src = dataUrl;
@@ -46,14 +46,11 @@
             //
 			});
 		  };
-		  
+        //test
 		function calcSizeKb(l, mb) {
 			
 			var s = (l * (3/4)) / 1024;
 			if(mb) s = s / 1024;
-			
-			
-			
 			return s.toFixed(2);
 			
 		}
