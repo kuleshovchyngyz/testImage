@@ -16,12 +16,12 @@
 			return ( ( 'draggable' in div ) || ( 'ondragstart' in div && 'ondrop' in div ) ) && 'FormData' in window && 'FileReader' in window;
 		}();
 			
-		var minifyImg = function(dataUrl,newWidth,imageType="image/jpeg",resolve,imageArguments=0.7){
+		var minifyImg = function(dataUrl,newWidth,imageType="image/jpeg",resolve,imageArguments=0.5,height=null){
 			var image, oldWidth, oldHeight, newHeight, canvas, ctx, newDataUrl;
 			(new Promise(function(resolve){
 			  image = new Image(); image.src = dataUrl;
               console.log('dataUrl:')
-			  console.log(dataUrl);
+
 			  //
 			  setTimeout(() => {
 				  resolve('Done : ');
@@ -73,7 +73,45 @@
 			var offset = circumference - percent / 100 * circumference;
 			circle.get(0).setAttribute('strokeDashoffset', offset);
 		}
-		
+        function uploadOriginal(data) {
+            //var_dump(22);
+
+            $.ajax({
+                url:'upload3.php',
+                type:'post',
+                contentType: 'application/octet-stream',
+                processData: false,
+                data: data,
+                success:function(response){
+                    //console.log(response);
+                },
+                xhr: function(){
+                    var xhr = new XMLHttpRequest();
+
+                    xhr.upload.addEventListener('progress', function(e){
+                        if(e.lengthComputable){
+                            var uploadPercent = e.loaded / e.total;
+                            uploadPercent = (uploadPercent * 100);
+
+                            //setCircleProgress($progress, uploadPercent);
+
+
+                            $progress.text(uploadPercent.toFixed(1) + '%');
+                            $progress.width(uploadPercent.toFixed(1) + '%');
+
+
+                            if(uploadPercent == 100){
+                                $progress.text('Completed');
+                            }
+
+                        }
+                    }, false);
+
+                    return xhr;
+                }
+            });
+
+        }
 		function uploadResized(data, filename) {
             //var_dump(22);
 			$('.img-preview[data-filename="'+filename+'"]').prepend('<div class="progress"><span></span></div>');
@@ -82,7 +120,7 @@
 			//var $progress = $('.img-preview[data-index='+index+'] circle');
 			var $progress = $('.img-preview[data-filename="'+filename+'"] span');
 			//drawCircleProgress($progress);
-            console.log(data);
+           // console.log(data);
 		   $.ajax({
 				url:'upload2.php',
 				type:'post',
@@ -139,7 +177,7 @@
 					
 			  
 			})).then((d)=>{
-				
+                console.log(d)
 				let filename = d.file.name;
 				var extn = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
 				var img_type = '';
@@ -156,17 +194,28 @@
 						img_type = 'image/jpeg';
 					break;
 				}
-				console.log('ext: '+extn);
+
+				var width = 1600;
+                var i = new Image();
+
+                i.onload = function(){
+                    console.log( i.width+", "+i.height );
+                    width = i.width;
+                    uploadOriginal(d.filedata);
+                    minifyImg(d.filedata, width, img_type, (data)=> {
+                        console.log('resized: '+calcSizeKb(data.length)+' kb');
+
+                        summResizedSize(data.length);
+
+                        uploadResized(data, filename);
+
+
+                    });
+                };
+
+                i.src = d.filedata;
 				
-				 minifyImg(d.filedata, 1600, img_type, (data)=> {
-					console.log('resized: '+calcSizeKb(data.length)+' kb');
-					
-					summResizedSize(data.length);
-					
-					uploadResized(data, filename);
-					
-					
-				});		
+
 
 			});
 		}
@@ -187,7 +236,7 @@
 		function checkFile(name) {
 			var extn = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
 			console.log('ext: '+extn);
-			return (["gif","png","jpg","jpeg"].indexOf(extn) != -1);
+			return (["gif","png","jpg","jpeg","webp"].indexOf(extn) != -1);
 		}
 		
 		
@@ -207,7 +256,7 @@
 					var reader = new FileReader();
 					reader.onload = function(e) {
 						let img_data = e.target.result;
-                        console.log(img_data.le)
+
                         console.log('original: '+calcSizeKb(img_data.length)+' kb');
 						
 						summTotalSize(img_data.length);
@@ -223,7 +272,7 @@
 			  });
 		}
 		
-		function startUploadFiles() {
+		function startUploadFiles(height, width) {
 			
 			  let i;
 			  let promises = [];
@@ -231,7 +280,7 @@
 			  if(!filesAll.length) return;
 			  
 			  for (i = 0; i < filesAll.length; i++) {
-				resizeBeforeUpload(filesAll[i], i);
+				resizeBeforeUpload(filesAll[i], i,height, width);
 			  }
 			  
 		}
@@ -243,6 +292,7 @@
 			  let promises = [];
 			  
 			  for (i = 0; i < files.length; i++) {
+
 				promises.push(workFile(files[i], i));
 			  }
 			  
@@ -288,6 +338,7 @@
 
 
 			$("#file").on('change', function() {
+
 			  previewFiles($(this)[0].files);
 			});
             $("#but_upload").click(function(){

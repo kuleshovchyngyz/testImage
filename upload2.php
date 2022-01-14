@@ -25,9 +25,9 @@ switch($file_type) {
 	break;
 }
 
-$filestore = file_put_contents('upload/'.$f_id.'.txt', $file_type.' +++ '.$filedata);
-$filestore = file_put_contents('upload/'.$f_id.'.'.$file_ext, base64_decode($filedata));
-base64_to_jpeg($filedata,'upload/new_'.$f_id.'.'.$file_ext);
+//$filestore = file_put_contents('upload/'.$f_id.'.txt', $file_type.' +++ '.$filedata);
+//$filestore = file_put_contents('upload/'.$f_id.'.'.$file_ext, base64_decode($filedata));
+base64_to_jpeg($filedata,'upload/'.$f_id.'_new.'.$file_ext);
 function base64_to_jpeg($base64_string, $output_file) {
     // open the output file for writing
     $ifp = fopen( $output_file, 'wb' );
